@@ -5,6 +5,7 @@ import CadastrarNovaObra from './pages/CadastrarNovaObra'
 import MeusLancamentos from './pages/MeusLancamentos'
 import CadastrarNovoShow from './pages/CadastrarNovoShow'
 import VitrindeShows from './pages/VitrindeShows'
+import AssinaturaBranding from './pages/AssinaturaBranding'
 
 function App() {
   return (
@@ -15,6 +16,7 @@ function App() {
           <Route path="/meus-lancamentos" element={<MeusLancamentos />} />
           <Route path="/cadastrar-show" element={<CadastrarNovoShow />} />
           <Route path="/shows" element={<VitrindeShows />} />
+          <Route path="/assinatura" element={<AssinaturaBranding />} />
           <Route path="/" element={<CadastrarNovaObra />} />
         </Routes>
       </Layout>

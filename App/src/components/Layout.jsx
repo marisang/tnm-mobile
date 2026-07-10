@@ -49,6 +49,12 @@ function Layout({ children }) {
           >
             🎪 Vitrine de Shows
           </button>
+          <button 
+            className={`menu-item ${location.pathname === '/assinatura' ? 'active' : ''}`}
+            onClick={() => navigateTo('/assinatura')}
+          >
+            ✍️ Assinatura de Contratos
+          </button>
         </div>
       </div>
 

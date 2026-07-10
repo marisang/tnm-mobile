@@ -699,13 +699,92 @@ body {
   background: var(--dark-purple);
 }
 
-/* Responsive */
-@media (max-width: 480px) {
-  .mobile-container {
-    max-width: 100%;
-  }
+/* File Upload Large */
+.file-upload-large {
+  background: rgba(255, 255, 255, 0.15);
+  border: 2px dashed rgba(255, 255, 255, 0.3);
+  border-radius: 8px;
+  padding: 40px 20px;
+  text-align: center;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+}
 
-  .nav-bar {
-    max-width: 100%;
-  }
+.file-upload-large:hover {
+  background: rgba(255, 255, 255, 0.2);
+  border-color: rgba(255, 255, 255, 0.5);
+}
+
+.file-upload-icon-large {
+  font-size: 48px;
+}
+
+.file-upload-text-large {
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.file-upload-large input {
+  display: none;
+}
+
+/* Contract Preview */
+.contract-preview {
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 8px;
+  padding: 20px;
+  margin-bottom: 20px;
+}
+
+.preview-header {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--bright-yellow);
+  margin-bottom: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.preview-content {
+  font-size: 13px;
+  color: rgba(255, 255, 255, 0.8);
+  line-height: 1.6;
+  word-break: break-all;
+}
+
+/* Checkboxes */
+.checkbox-label {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 12px;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 8px;
+  cursor: pointer;
+  margin-bottom: 12px;
+  transition: all 0.2s ease;
+}
+
+.checkbox-label:hover {
+  background: rgba(255, 255, 255, 0.15);
+}
+
+.checkbox-input {
+  width: 20px;
+  height: 20px;
+  min-width: 20px;
+  margin-top: 2px;
+  cursor: pointer;
+  accent-color: var(--bright-yellow);
+}
+
+.checkbox-text {
+  font-size: 14px;
+  color: white;
+  line-height: 1.4;
+  cursor: pointer;
 }
