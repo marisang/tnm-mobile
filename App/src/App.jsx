@@ -1,6 +1,7 @@
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom'
 import './App.css'
 import Layout from './components/Layout'
+import PainelFinanceiro from './pages/PainelFinanceiro'
 import CadastrarNovaObra from './pages/CadastrarNovaObra'
 import MeusLancamentos from './pages/MeusLancamentos'
 import CadastrarNovoShow from './pages/CadastrarNovoShow'
@@ -18,6 +19,7 @@ function App() {
           <Route path="/shows" element={<VitrindeShows />} />
           <Route path="/assinatura" element={<AssinaturaBranding />} />
           <Route path="/" element={<CadastrarNovaObra />} />
+          <Route path="/PainelFinanceiro" element={<PainelFinanceiro />} />
         </Routes>
       </Layout>
     </Router>

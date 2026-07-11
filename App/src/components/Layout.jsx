@@ -26,6 +26,12 @@ function Layout({ children }) {
         </div>
         <div className="sidebar-content">
           <button 
+            className={`menu-item ${location.pathname === '/' ? 'active' : ''}`}
+            onClick={() => navigateTo('/PainelFinanceiro')}
+          >
+            💰 Painel Financeiro
+          </button>
+          <button 
             className={`menu-item ${location.pathname === '/cadastrar-obra' ? 'active' : ''}`}
             onClick={() => navigateTo('/cadastrar-obra')}
           >
