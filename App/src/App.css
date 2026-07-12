@@ -842,7 +842,7 @@ body {
   padding: 8px;
 }
 
-/* aviso de redirecionamento */
+/* Aviso de redirecionamento (modal) */
 .modal-overlay {
   position: fixed;
   inset: 0;
@@ -878,4 +878,117 @@ body {
   display: flex;
   gap: 10px;
   justify-content: flex-end;
+}
+
+/* Doc Type Card */
+.doc-type-card {
+  background: var(--dark-purple);
+  border-radius: var(--border-radius);
+  padding: 16px;
+  margin-bottom: 12px;
+  color: white;
+  cursor: pointer;
+  border: 2px solid transparent;
+  transition: border-color 0.15s ease;
+}
+
+.doc-type-card:hover {
+  border-color: var(--bright-yellow);
+}
+
+.doc-type-card.selected {
+  border-color: var(--bright-yellow);
+}
+
+.doc-type-card-title {
+  font-weight: 700;
+  font-size: 15px;
+  margin-bottom: 4px;
+}
+
+.doc-type-card-desc {
+  font-size: 12px;
+  opacity: 0.8;
+}
+
+/* Doc Form Group */
+.doc-form-group {
+  margin-bottom: 12px;
+}
+
+.doc-form-group label {
+  display: block;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--primary-purple);
+  margin-bottom: 4px;
+}
+
+.doc-form-group input,
+.doc-form-group select {
+  width: 100%;
+  padding: 10px 12px;
+  border-radius: 8px;
+  border: 1px solid #ccc;
+  font-size: 14px;
+}
+
+/* PDF / Document Template */
+.pdf-render-area {
+  background: white;
+  pointer-events: none;
+}
+
+.document-template {
+  font-family: 'Times New Roman', Times, serif;
+  color: #1a1a1a;
+  padding: 40px;
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+.document-template h1 {
+  font-size: 15px;
+  text-align: center;
+  margin-bottom: 20px;
+}
+
+.document-template h2 {
+  font-size: 13px;
+  text-decoration: underline;
+  margin-top: 18px;
+  margin-bottom: 8px;
+}
+
+.document-template p {
+  text-align: justify;
+  margin-bottom: 10px;
+}
+
+.document-template .assinatura-local-data {
+  margin-top: 40px;
+  text-align: right;
+}
+
+.document-template .assinatura-bloco {
+  margin-top: 50px;
+  text-align: center;
+}
+
+.dados-titular-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 10px;
+  font-size: 12px;
+}
+
+.dados-titular-table td {
+  border: 1px solid #999;
+  padding: 6px 8px;
+}
+
+.dados-titular-table td:first-child {
+  font-weight: 700;
+  width: 40%;
+  background: #f2f2f2;
 }
