@@ -205,8 +205,8 @@ function PainelFinanceiro() {
   })
 
   function handleConfirmarSaque() {
-    // Placeholder: aqui entraria a URL real do ambiente da ONErpm
-    window.open('https://onerpm.com', '_blank')
+  
+    window.open('https://dashboard.onerpm.com/login', '_blank')
     setMostrarModalSaque(false)
   }
 
@@ -279,7 +279,7 @@ function PainelFinanceiro() {
 
       {/* Solicitar Saque */}
       <button className="btn btn-primary" onClick={() => setMostrarModalSaque(true)}>
-        Solicitar Saque
+        Acesso à ONErpm
       </button>
 
       {/* Gerar Documentos */}
@@ -321,8 +321,7 @@ function PainelFinanceiro() {
           <div className="modal-box" onClick={(e) => e.stopPropagation()}>
             <h3>Redirecionamento</h3>
             <p>
-              Você será redirecionado para o ambiente da <strong>ONErpm</strong> para
-              concluir a solicitação de saque.
+              Você será redirecionado para o ambiente da <strong>ONErpm</strong> .
             </p>
             <div className="modal-actions">
               <button className="btn-secondary btn-small" onClick={() => setMostrarModalSaque(false)}>
