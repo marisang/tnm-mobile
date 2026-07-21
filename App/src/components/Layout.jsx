@@ -61,7 +61,7 @@ function Layout({ children }) {
             className={`menu-item ${location.pathname === '/' ? 'active' : ''}`}
             onClick={() => navigateTo('/PainelFinanceiro')}
           >
-            💰 Painel Financeiro / 📄 Gerador de Pdf
+            💰 Painel Financeiro
           </button>
         </div>
       </div>

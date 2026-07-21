@@ -321,7 +321,7 @@ function PainelFinanceiro() {
           <div className="modal-box" onClick={(e) => e.stopPropagation()}>
             <h3>Redirecionamento</h3>
             <p>
-              Você será redirecionado para o ambiente da <strong>ONErpm</strong> .
+              Você será redirecionado(a) para a plataforma da <strong>ONErpm</strong>, onde o saque deverá ser realizado. O aplicativo da Tô na Mídia não processa solicitações de saque.
             </p>
             <div className="modal-actions">
               <button className="btn-secondary btn-small" onClick={() => setMostrarModalSaque(false)}>
