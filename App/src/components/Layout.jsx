@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { useNavigate, useLocation } from 'react-router-dom'
+import logoTNM from '../assets/Logo to na Midia ATUALIZADO.png'
 
 function Layout({ children }) {
   const navigate = useNavigate()
@@ -71,7 +72,7 @@ function Layout({ children }) {
       {/* Header */}
       <div className="header">
         <div className="header-left">
-          <div className="logo">🎵</div>
+          <img src={logoTNM} alt="To Na Mídia" className="logo-img" />
         </div>
         <div className="header-icons">
           <button className="header-icon-btn">🔔</button>
