@@ -1,10 +1,5 @@
-import { useState, useEffect, useRef } from 'react'
-import { useSearchParams } from 'react-router-dom'
-import ContratoDistribuicaoTemplate from '../templates/documentos/ContratoDistribuicaoTemplate'
-import AutorizacaoImagemTemplate from '../templates/documentos/AutorizacaoImagemTemplate'
-import { gerarPdf, gerarPdfComoBlob } from '../utils/pdfGenerator'
-import { supabase } from '../lib/supabaseClient'
-import { mapArtistaParaDadosDocumento } from '../utils/mapArtistaParaDadosDocumento'
+import { useState, useEffect } from 'react'
+import { calcularSplitFinanceiro } from '../utils/calcularSplitFinanceiro'
 
 // Componente de gráfico de linha simples, feito em SVG puro (sem dependências externas)
 function GraficoLinha({ dados }) {
@@ -76,77 +71,28 @@ function GraficoLinha({ dados }) {
   )
 }
 
-//  Motor de Geração de PDFs 
-// Cada tipo de documento aponta pro seu componente de template e define
-// quais campos o formulário precisa pedir pro usuário.
-const TIPOS_DE_DOCUMENTO = [
-  {
-    id: 'contrato-distribuicao',
-    titulo: 'Contrato de Distribuição Digital',
-    descricao: 'Administração exclusiva de masters e distribuição digital.',
-    Template: ContratoDistribuicaoTemplate,
-  },
-  {
-    id: 'autorizacao-imagem',
-    titulo: 'Autorização para Uso de Imagem',
-    descricao: 'Termo de uso de imagem e voz (LGPD).',
-    Template: AutorizacaoImagemTemplate,
-  },
-]
-
-const CAMPOS_INICIAIS_DOCUMENTO = {
-  nomeCompleto: '',
-  pseudonimoArtistico: '',
-  nacionalidade: 'Brasileira',
-  estadoCivil: '',
-  profissao: '',
-  rg: '',
-  orgaoEmissor: '',
-  cpf: '',
-  endereco: '',
-  bairro: '',
-  municipio: '',
-  uf: '',
-  cep: '',
-  email: '',
-  celular: '',
-  dataNascimento: '',
-  dataAssinatura: '',
-}
-
 function PainelFinanceiro() {
-  // Estado do painel financeiro (saldo + gráfico) 
   const [carregando, setCarregando] = useState(true)
   const [erro, setErro] = useState(null)
   const [dadosFinanceiros, setDadosFinanceiros] = useState({
-    saldo: 0,
+    valorBrutoTotal: 0,
+    temVinculoEditorial: false,
     atualizadoEm: '',
     reproducoesMensais: [],
   })
   const [mostrarModalSaque, setMostrarModalSaque] = useState(false)
-
-  // Estado do gerador de documentos 
-  const [searchParams] = useSearchParams()
-  const artistaId = searchParams.get('artistaId') // ex: /?artistaId=123
-
-  const [tipoSelecionado, setTipoSelecionado] = useState(null)
-  const [dadosDocumento, setDadosDocumento] = useState(CAMPOS_INICIAIS_DOCUMENTO)
-  const [gerandoPdf, setGerandoPdf] = useState(false)
-  const [carregandoArtista, setCarregandoArtista] = useState(false)
-  const [erroArtista, setErroArtista] = useState(null)
-  const areaRenderizacaoRef = useRef(null)
 
   useEffect(() => {
     async function carregarDadosFinanceiros() {
       try {
         setCarregando(true)
 
-      
 
-        // Mock temporário, apenas para desenvolvimento 
+        // --- Mock temporário, apenas para desenvolvimento ---
         await new Promise((resolve) => setTimeout(resolve, 400))
         const mock = {
-          saldo: 10000.0,
+          valorBrutoTotal: 20000.0,
+          temVinculoEditorial: false, // troque para true para testar o cenário com editora
           atualizadoEm: '17/06/2026 às 15:00',
           reproducoesMensais: [
             { label: 'Jan', value: 2050 },
@@ -158,7 +104,7 @@ function PainelFinanceiro() {
           ],
         }
         setDadosFinanceiros(mock)
-        //  fim do mock 
+        // --- fim do mock ---
       } catch (e) {
         setErro('Não foi possível carregar os dados financeiros.')
       } finally {
@@ -170,85 +116,24 @@ function PainelFinanceiro() {
   }, [])
 
  
-  useEffect(() => {
-    if (!artistaId) return
+  const split = calcularSplitFinanceiro(
+    dadosFinanceiros.valorBrutoTotal,
+    dadosFinanceiros.temVinculoEditorial
+  )
 
-    async function carregarArtista() {
-      setCarregandoArtista(true)
-      setErroArtista(null)
-      try {
-        const { data, error } = await supabase
-          .from('artistas')
-          .select('*')
-          .eq('id', artistaId)
-          .single()
-
-        if (error) throw error
-
-        setDadosDocumento((anterior) => ({
-          ...anterior,
-          ...mapArtistaParaDadosDocumento(data),
-        }))
-      } catch (e) {
-        setErroArtista('Não foi possível carregar os dados deste artista.')
-      } finally {
-        setCarregandoArtista(false)
-      }
-    }
-
-    carregarArtista()
-  }, [artistaId])
-
-  const saldoFormatado = dadosFinanceiros.saldo.toLocaleString('pt-BR', {
+  const saldoFormatado = split.artista.toLocaleString('pt-BR', {
     style: 'currency',
     currency: 'BRL',
   })
 
+  const percentualArtistaFormatado = split.percentualArtista.toLocaleString('pt-BR', {
+    maximumFractionDigits: 1,
+  })
+
   function handleConfirmarSaque() {
-  
     window.open('https://dashboard.onerpm.com/login', '_blank')
     setMostrarModalSaque(false)
   }
-
-  function handleChangeCampoDocumento(campo, valor) {
-    setDadosDocumento((anterior) => ({ ...anterior, [campo]: valor }))
-  }
-
-  async function handleGerarPdf() {
-    if (!tipoSelecionado) return
-    setGerandoPdf(true)
-    try {
-      const nomeArquivo = `${tipoSelecionado.id}-${dadosDocumento.nomeCompleto || 'documento'}.pdf`
-      await gerarPdf(areaRenderizacaoRef.current, nomeArquivo)
-
-     
-      if (artistaId) {
-        const pdfBlob = await gerarPdfComoBlob(areaRenderizacaoRef.current)
-
-        const { error: erroUpload } = await supabase.storage
-          .from('documentos')
-          .upload(`${artistaId}/${nomeArquivo}`, pdfBlob, {
-            contentType: 'application/pdf',
-            upsert: true,
-          })
-        if (erroUpload) throw erroUpload
-
-        const { error: erroInsert } = await supabase
-          .from('documentos_gerados')
-          .insert({
-            artista_id: artistaId,
-            tipo: tipoSelecionado.id,
-            arquivo: `${artistaId}/${nomeArquivo}`,
-            criado_em: new Date().toISOString(),
-          })
-        if (erroInsert) throw erroInsert
-      }
-    } finally {
-      setGerandoPdf(false)
-    }
-  }
-
-  const TemplateSelecionado = tipoSelecionado?.Template
 
   if (carregando) {
     return <p style={{ textAlign: 'center', marginTop: 40 }}>Carregando dados...</p>
@@ -264,6 +149,10 @@ function PainelFinanceiro() {
       <div className="balance-card">
         <div className="balance-label">Saldo Disponível</div>
         <div className="balance-amount">{saldoFormatado}</div>
+        <div className="balance-percentual">
+          {percentualArtistaFormatado}% do faturamento bruto
+          {dadosFinanceiros.temVinculoEditorial && ' (após repasse à editora)'}
+        </div>
         <div className="balance-updated">
           Atualizado em: {dadosFinanceiros.atualizadoEm}
         </div>
@@ -281,39 +170,6 @@ function PainelFinanceiro() {
       <button className="btn btn-primary" onClick={() => setMostrarModalSaque(true)}>
         Acesso à ONErpm
       </button>
-
-      {/* Gerar Documentos */}
-      <div className="page-title" style={{ marginTop: 28 }}>
-        Gerar Documentos
-      </div>
-
-      {carregandoArtista && <p>Carregando dados do artista...</p>}
-      {erroArtista && <p style={{ color: 'red' }}>{erroArtista}</p>}
-
-      {TIPOS_DE_DOCUMENTO.map((tipo) => (
-        <div
-          key={tipo.id}
-          className={`doc-type-card ${tipoSelecionado?.id === tipo.id ? 'selected' : ''}`}
-          onClick={() => setTipoSelecionado(tipo)}
-        >
-          <div className="doc-type-card-title">{tipo.titulo}</div>
-          <div className="doc-type-card-desc">{tipo.descricao}</div>
-        </div>
-      ))}
-
-      {tipoSelecionado && (
-        <>
-          
-          <button className="btn btn-primary" onClick={handleGerarPdf} disabled={gerandoPdf}>
-            {gerandoPdf ? 'Gerando PDF...' : 'Gerar PDF'}
-          </button>
-        </>
-      )}
-
-      {/* Área escondida onde o template do contrato é montado antes de virar PDF */}
-      <div className="pdf-render-area" ref={areaRenderizacaoRef}>
-        {TemplateSelecionado && <TemplateSelecionado dados={dadosDocumento} />}
-      </div>
 
       {/* Modal de aviso de redirecionamento do saque */}
       {mostrarModalSaque && (

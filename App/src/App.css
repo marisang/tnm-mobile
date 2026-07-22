@@ -826,6 +826,17 @@ body {
   opacity: 0.7;
 }
 
+.balance-percentual {
+  display: inline-block;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--dark-purple);
+  background: var(--bright-yellow);
+  border-radius: 20px;
+  padding: 3px 10px;
+  margin-bottom: 8px;
+}
+
 /* Reproduções Mensais */
 .chart-card {
   background: var(--dark-purple);
