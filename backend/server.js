@@ -1,57 +1,42 @@
-import express from 'express'
-import cors from 'cors'
-import dotenv from 'dotenv'
-import { fileURLToPath } from 'url'
-import { dirname } from 'path'
+import express from 'express';
+import cors from 'cors';
+import dotenv from 'dotenv';
+import artistasRouter from './routes/artistas.js';
+import obrasRouter from './routes/obras.js';
+import showsRouter from './routes/shows.js';
+import contratosRouter from './routes/contratos.js';
+import transacoesRouter from './routes/transacoes.js';
+import albunsRouter from './routes/albuns.js';
 
-// Import routes
-import artistasRoutes from './routes/artistas.js'
-import obrasRoutes from './routes/obras.js'
-import showsRoutes from './routes/shows.js'
-import contratosRoutes from './routes/contratos.js'
+dotenv.config();
 
-// Load environment variables
-dotenv.config()
+const app = express();
+const PORT = process.env.PORT || 3000;
 
-const __filename = fileURLToPath(import.meta.url)
-const __dirname = dirname(__filename)
+// Middlewares
+app.use(cors());
+app.use(express.json());
 
-// Create Express app
-const app = express()
+// Health check
+app.get('/health', (req, res) => {
+  res.json({ status: 'ok', message: 'TNM API está funcionando!' });
+});
 
-// Middleware
-app.use(cors())
-app.use(express.json())
-app.use(express.urlencoded({ limit: '50mb', extended: true }))
+// Rotas
+app.use('/api/artistas', artistasRouter);
+app.use('/api/obras', obrasRouter);
+app.use('/api/shows', showsRouter);
+app.use('/api/contratos', contratosRouter);
+app.use('/api/transacoes', transacoesRouter);
+app.use('/api/albuns', albunsRouter);
 
-// Routes
-app.get('/api/health', (req, res) => {
-  res.json({ status: 'OK', message: 'Backend is running' })
-})
-
-// API Routes
-app.use('/api/artistas', artistasRoutes)
-app.use('/api/obras', obrasRoutes)
-app.use('/api/shows', showsRoutes)
-app.use('/api/contratos', contratosRoutes)
-
-// Error handling middleware
+// Error handling
 app.use((err, req, res, next) => {
-  console.error(err.stack)
-  res.status(500).json({ error: err.message || 'Internal Server Error' })
-})
+  console.error(err.stack);
+  res.status(500).json({ error: 'Algo deu errado!' });
+});
 
-// 404 handler
-app.use((req, res) => {
-  res.status(404).json({ error: 'Route not found' })
-})
-
-// Start server
-const PORT = process.env.PORT || 3000
 app.listen(PORT, () => {
-  console.log(`🚀 Backend running on http://localhost:${PORT}`)
-  console.log(`📊 Database: ${process.env.DB_HOST}:${process.env.DB_PORT}/${process.env.DB_NAME}`)
-  console.log(`📚 API Docs: http://localhost:${PORT}/api/health`)
-})
-
-export default app
+  console.log(`🚀 Servidor rodando na porta ${PORT}`);
+  console.log(`📍 Health check: http://localhost:${PORT}/health`);
+});

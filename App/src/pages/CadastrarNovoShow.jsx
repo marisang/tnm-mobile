@@ -1,16 +1,26 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { useShows } from '../hooks/useShows'
+import { useArtistas } from '../hooks/useArtistas'
 
 function CadastrarNovoShow() {
   const navigate = useNavigate()
+  const { criarShow } = useShows()
+  const { artistas } = useArtistas()
+  
   const [formData, setFormData] = useState({
-    banner: null,
-    date: '',
-    time: '',
-    address: '',
-    ticketUrl: '',
-    whatsapp: '',
+    titulo_evento: '',
+    data_evento: '',
+    local_nome: '',
+    banner_url: '',
+    link_ingressos: '',
+    contato_whatsapp: '',
+    release_texto: '',
+    status_publicacao: 'publicado',
+    artista_id: '',
   })
+  
+  const [uploading, setUploading] = useState(false)
 
   const handleInputChange = (e) => {
     const { name, value } = e.target
@@ -19,14 +29,38 @@ function CadastrarNovoShow() {
 
   const handleFileChange = (e) => {
     const file = e.target.files[0]
-    setFormData((prev) => ({ ...prev, banner: file }))
+    if (file) {
+      // TODO: Implementar upload para Supabase Storage
+      // Por enquanto, apenas mostra o nome do arquivo
+      alert('Upload de imagens será implementado em breve. Por enquanto, use uma URL.')
+    }
   }
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault()
-    console.log('Show form submitted:', formData)
-    alert('Show cadastrado com sucesso!')
-    navigate('/shows')
+    
+    if (!formData.artista_id) {
+      alert('Selecione um artista!')
+      return
+    }
+
+    if (!formData.titulo_evento || !formData.data_evento || !formData.local_nome) {
+      alert('Preencha todos os campos obrigatórios!')
+      return
+    }
+
+    setUploading(true)
+    
+    try {
+      await criarShow(formData)
+      alert('Show cadastrado com sucesso!')
+      navigate('/shows')
+    } catch (error) {
+      console.error('Erro ao cadastrar show:', error)
+      alert('Erro ao cadastrar show: ' + error.message)
+    } finally {
+      setUploading(false)
+    }
   }
 
   return (
@@ -35,76 +69,132 @@ function CadastrarNovoShow() {
       
       <form onSubmit={handleSubmit}>
         <div className="form-section">
-          <div className="form-section-title">Cadastro do Álbum</div>
+          <div className="form-section-title">Cadastro do Show</div>
 
-          {/* Banner Upload */}
-          <div className="form-group">
-            <label className="file-upload">
-              <div className="file-upload-icon">📁</div>
-              <div className="file-upload-text">Escolha o arquivo e arraste-o aqui</div>
-              <input
-                type="file"
-                accept="image/*"
-                onChange={handleFileChange}
-              />
-            </label>
-            {formData.banner && (
-              <div style={{ fontSize: '12px', color: 'rgba(255,255,255,0.7)', marginTop: '8px' }}>
-                ✓ {formData.banner.name}
-              </div>
-            )}
-          </div>
-
-          {/* Date and Time */}
-          <div className="form-group">
-            <input
-              type="datetime-local"
-              name="datetime"
-              className="form-input"
-              placeholder="18/06/2026 às 21:00"
-              value={formData.datetime}
-              onChange={handleInputChange}
-            />
-          </div>
-
-          {/* Address */}
+          {/* Título do Evento */}
           <div className="form-group">
             <input
               type="text"
-              name="address"
+              name="titulo_evento"
               className="form-input"
-              placeholder="Endereço"
-              value={formData.address}
+              placeholder="Título do Evento *"
+              value={formData.titulo_evento}
               onChange={handleInputChange}
+              required
             />
           </div>
 
-          {/* Ticket URL */}
+          {/* Selecionar Artista */}
+          <div className="form-group">
+            <select
+              name="artista_id"
+              className="form-input"
+              value={formData.artista_id}
+              onChange={handleInputChange}
+              required
+              style={{ color: formData.artista_id ? 'white' : 'rgba(255,255,255,0.5)' }}
+            >
+              <option value="">Selecione o Artista *</option>
+              {artistas.map((artista) => (
+                <option key={artista.id} value={artista.id}>
+                  {artista.pseudonimo_artistico || artista.nome_completo}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          {/* Data do Evento */}
+          <div className="form-group">
+            <input
+              type="date"
+              name="data_evento"
+              className="form-input"
+              value={formData.data_evento}
+              onChange={handleInputChange}
+              required
+            />
+          </div>
+
+          {/* Local */}
+          <div className="form-group">
+            <input
+              type="text"
+              name="local_nome"
+              className="form-input"
+              placeholder="Local do Evento *"
+              value={formData.local_nome}
+              onChange={handleInputChange}
+              required
+            />
+          </div>
+
+          {/* URL do Banner */}
           <div className="form-group">
             <input
               type="url"
-              name="ticketUrl"
+              name="banner_url"
               className="form-input"
-              placeholder="URL da Venda de Ingressos"
-              value={formData.ticketUrl}
+              placeholder="URL do Banner (opcional)"
+              value={formData.banner_url}
+              onChange={handleInputChange}
+            />
+            <small style={{ color: 'rgba(255,255,255,0.5)', fontSize: '11px', marginTop: '4px', display: 'block' }}>
+              Exemplo: https://exemplo.com/banner.jpg
+            </small>
+          </div>
+
+          {/* Link de Ingressos */}
+          <div className="form-group">
+            <input
+              type="url"
+              name="link_ingressos"
+              className="form-input"
+              placeholder="URL da Venda de Ingressos (opcional)"
+              value={formData.link_ingressos}
               onChange={handleInputChange}
             />
           </div>
 
-          {/* WhatsApp Contact */}
+          {/* WhatsApp */}
           <div className="form-group">
             <input
               type="tel"
-              name="whatsapp"
+              name="contato_whatsapp"
               className="form-input"
-              placeholder="Whatsapp de Contato"
-              value={formData.whatsapp}
+              placeholder="WhatsApp de Contato (opcional)"
+              value={formData.contato_whatsapp}
               onChange={handleInputChange}
             />
           </div>
 
-          <button type="submit" className="btn-primary">
-            CADASTRAR
+          {/* Release/Descrição */}
+          <div className="form-group">
+            <textarea
+              name="release_texto"
+              className="form-textarea"
+              placeholder="Descrição / Release do Evento (opcional)"
+              value={formData.release_texto}
+              onChange={handleInputChange}
+              rows={4}
+            />
+          </div>
+
+          {/* Status */}
+          <div className="form-group">
+            <select
+              name="status_publicacao"
+              className="form-input"
+              value={formData.status_publicacao}
+              onChange={handleInputChange}
+              style={{ color: 'white' }}
+            >
+              <option value="rascunho">Rascunho</option>
+              <option value="publicado">Publicado</option>
+            </select>
+          </div>
+
+          <button type="submit" className="btn-primary" disabled={uploading}>
+            {uploading ? 'CADASTRANDO...' : 'CADASTRAR'}
           </button>
         </div>
       </form>

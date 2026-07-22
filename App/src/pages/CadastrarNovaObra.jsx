@@ -1,17 +1,24 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { useObras } from '../hooks/useObras'
+import { useArtistas } from '../hooks/useArtistas'
 
 function CadastrarNovaObra() {
   const navigate = useNavigate()
+  const { criarObra } = useObras()
+  const { artistas } = useArtistas()
+  
   const [formData, setFormData] = useState({
-    audioFile: null,
-    albumCover: null,
-    title: '',
-    lyrics: '',
+    titulo: '',
+    letra: '',
+    isrc: '',
+    status: 'cadastrada',
+    artista_id: '',
     composers: [],
     composerName: '',
-    isrc: '',
   })
+  
+  const [uploading, setUploading] = useState(false)
 
   const handleInputChange = (e) => {
     const { name, value } = e.target
@@ -20,7 +27,10 @@ function CadastrarNovaObra() {
 
   const handleFileChange = (e, fileType) => {
     const file = e.target.files[0]
-    setFormData((prev) => ({ ...prev, [fileType]: file }))
+    if (file) {
+      // TODO: Implementar upload para Supabase Storage
+      alert('Upload de arquivos será implementado em breve.')
+    }
   }
 
   const addComposer = () => {
@@ -40,11 +50,42 @@ function CadastrarNovaObra() {
     }))
   }
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault()
-    console.log('Form submitted:', formData)
-    alert('Obra cadastrada com sucesso!')
-    navigate('/meus-lancamentos')
+    
+    if (!formData.artista_id) {
+      alert('Selecione um artista!')
+      return
+    }
+
+    if (!formData.titulo) {
+      alert('Digite o título da obra!')
+      return
+    }
+
+    setUploading(true)
+    
+    try {
+      const obraData = {
+        titulo: formData.titulo,
+        letra: formData.letra,
+        isrc: formData.isrc,
+        status: formData.status,
+        artista_id: formData.artista_id,
+      }
+      
+      await criarObra(obraData)
+      
+      // TODO: Cadastrar compositores após criar a obra
+      
+      alert('Obra cadastrada com sucesso!')
+      navigate('/meus-lancamentos')
+    } catch (error) {
+      console.error('Erro ao cadastrar obra:', error)
+      alert('Erro ao cadastrar obra: ' + error.message)
+    } finally {
+      setUploading(false)
+    }
   }
 
   return (
@@ -53,46 +94,49 @@ function CadastrarNovaObra() {
       
       <form onSubmit={handleSubmit}>
         <div className="form-section">
-          <div className="form-section-title">Cadastro do Álbum</div>
+          <div className="form-section-title">Cadastro da Obra</div>
 
-          {/* Audio File Upload */}
-          <div className="form-group">
-            <label className="file-upload">
-              <div className="file-upload-icon">🎵</div>
-              <div className="file-upload-text">Escolha o arquivo e arraste-o aqui</div>
-              <input
-                type="file"
-                accept=".wav,.mp3"
-                onChange={(e) => handleFileChange(e, 'audioFile')}
-              />
-            </label>
-            {formData.audioFile && (
-              <div style={{ fontSize: '12px', color: 'rgba(255,255,255,0.7)', marginTop: '8px' }}>
-                ✓ {formData.audioFile.name}
-              </div>
-            )}
-          </div>
-
-          {/* Title */}
+          {/* Título */}
           <div className="form-group">
             <input
               type="text"
-              name="title"
+              name="titulo"
               className="form-input"
-              placeholder="Título da Obra"
-              value={formData.title}
+              placeholder="Título da Obra *"
+              value={formData.titulo}
               onChange={handleInputChange}
+              required
             />
           </div>
 
-          {/* Lyrics */}
+          {/* Selecionar Artista */}
+          <div className="form-group">
+            <select
+              name="artista_id"
+              className="form-input"
+              value={formData.artista_id}
+              onChange={handleInputChange}
+              required
+              style={{ color: formData.artista_id ? 'white' : 'rgba(255,255,255,0.5)' }}
+            >
+              <option value="">Selecione o Artista *</option>
+              {artistas.map((artista) => (
+                <option key={artista.id} value={artista.id}>
+                  {artista.pseudonimo_artistico || artista.nome_completo}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          {/* Letra */}
           <div className="form-group">
             <textarea
-              name="lyrics"
+              name="letra"
               className="form-textarea"
-              placeholder="Letra da Música"
-              value={formData.lyrics}
+              placeholder="Letra da Música (opcional)"
+              value={formData.letra}
               onChange={handleInputChange}
+              rows={6}
             />
           </div>
 
@@ -141,32 +185,30 @@ function CadastrarNovaObra() {
               type="text"
               name="isrc"
               className="form-input"
-              placeholder="Código ISRC"
+              placeholder="Código ISRC (opcional)"
               value={formData.isrc}
               onChange={handleInputChange}
             />
           </div>
 
-          {/* Archive Upload */}
+          {/* Status */}
           <div className="form-group">
-            <label className="file-upload">
-              <div className="file-upload-icon">📁</div>
-              <div className="file-upload-text">Escolha o arquivo e arraste-o aqui</div>
-              <input
-                type="file"
-                accept="image/*"
-                onChange={(e) => handleFileChange(e, 'albumCover')}
-              />
-            </label>
-            {formData.albumCover && (
-              <div style={{ fontSize: '12px', color: 'rgba(255,255,255,0.7)', marginTop: '8px' }}>
-                ✓ {formData.albumCover.name}
-              </div>
-            )}
+            <select
+              name="status"
+              className="form-input"
+              value={formData.status}
+              onChange={handleInputChange}
+              style={{ color: 'white' }}
+            >
+              <option value="cadastrada">Cadastrada</option>
+              <option value="em_analise">Em Análise</option>
+              <option value="aprovada">Aprovada</option>
+              <option value="rejeitada">Rejeitada</option>
+            </select>
           </div>
 
-          <button type="submit" className="btn-primary">
-            CADASTRAR
+          <button type="submit" className="btn-primary" disabled={uploading}>
+            {uploading ? 'CADASTRANDO...' : 'CADASTRAR'}
           </button>
         </div>
       </form>
