@@ -26,6 +26,7 @@ function Layout({ children }) {
           <button className="close-btn" onClick={toggleMenu}>✕</button>
         </div>
         <div className="sidebar-content">
+          
           <button 
             className={`menu-item ${location.pathname === '/cadastrar-obra' ? 'active' : ''}`}
             onClick={() => navigateTo('/cadastrar-obra')}
@@ -55,6 +56,12 @@ function Layout({ children }) {
             onClick={() => navigateTo('/assinatura')}
           >
             ✍️ Assinatura de Contratos
+          </button>
+          <button 
+            className={`menu-item ${location.pathname === '/' ? 'active' : ''}`}
+            onClick={() => navigateTo('/PainelFinanceiro')}
+          >
+            💰 Painel Financeiro
           </button>
         </div>
       </div>

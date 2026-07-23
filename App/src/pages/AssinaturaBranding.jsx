@@ -1,5 +1,48 @@
-import { useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useState, useRef, useEffect } from 'react'
+import { useNavigate, useSearchParams } from 'react-router-dom'
+import ContratoDistribuicaoTemplate from '../templates/documentos/ContratoDistribuicaoTemplate'
+import AutorizacaoImagemTemplate from '../templates/documentos/AutorizacaoImagemTemplate'
+import { gerarPdf, gerarPdfComoBlob } from '../utils/pdfGenerator'
+import { supabase } from '../lib/supabaseClient'
+import { mapArtistaParaDadosDocumento } from '../utils/mapArtistaParaDadosDocumento'
+
+//  Motor de Geração de PDFs 
+// Cada tipo de documento aponta pro seu componente de template e define
+// quais campos o formulário precisa pedir pro usuário.
+const TIPOS_DE_DOCUMENTO = [
+  {
+    id: 'contrato-distribuicao',
+    titulo: 'Contrato de Distribuição Digital',
+    descricao: 'Administração exclusiva de masters e distribuição digital.',
+    Template: ContratoDistribuicaoTemplate,
+  },
+  {
+    id: 'autorizacao-imagem',
+    titulo: 'Autorização para Uso de Imagem',
+    descricao: 'Termo de uso de imagem e voz (LGPD).',
+    Template: AutorizacaoImagemTemplate,
+  },
+]
+
+const CAMPOS_INICIAIS_DOCUMENTO = {
+  nomeCompleto: '',
+  pseudonimoArtistico: '',
+  nacionalidade: 'Brasileira',
+  estadoCivil: '',
+  profissao: '',
+  rg: '',
+  orgaoEmissor: '',
+  cpf: '',
+  endereco: '',
+  bairro: '',
+  municipio: '',
+  uf: '',
+  cep: '',
+  email: '',
+  celular: '',
+  dataNascimento: '',
+  dataAssinatura: '',
+}
 
 function AssinaturaBranding() {
   const navigate = useNavigate()
@@ -11,6 +54,86 @@ function AssinaturaBranding() {
   })
 
   const [currentStep, setCurrentStep] = useState('upload') // upload, review, sign
+
+  //  Estado do gerador de documentos (igual estava em PainelFinanceiro) 
+  const [searchParams] = useSearchParams()
+  const artistaId = searchParams.get('artistaId') // ex: /?artistaId=123
+
+  const [tipoSelecionado, setTipoSelecionado] = useState(null)
+  const [dadosDocumento, setDadosDocumento] = useState(CAMPOS_INICIAIS_DOCUMENTO)
+  const [gerandoPdf, setGerandoPdf] = useState(false)
+  const [carregandoArtista, setCarregandoArtista] = useState(false)
+  const [erroArtista, setErroArtista] = useState(null)
+  const areaRenderizacaoRef = useRef(null)
+
+  useEffect(() => {
+    if (!artistaId) return
+
+    async function carregarArtista() {
+      setCarregandoArtista(true)
+      setErroArtista(null)
+      try {
+        const { data, error } = await supabase
+          .from('artistas')
+          .select('*')
+          .eq('id', artistaId)
+          .single()
+
+        if (error) throw error
+
+        setDadosDocumento((anterior) => ({
+          ...anterior,
+          ...mapArtistaParaDadosDocumento(data),
+        }))
+      } catch (e) {
+        setErroArtista('Não foi possível carregar os dados deste artista.')
+      } finally {
+        setCarregandoArtista(false)
+      }
+    }
+
+    carregarArtista()
+  }, [artistaId])
+
+  function handleChangeCampoDocumento(campo, valor) {
+    setDadosDocumento((anterior) => ({ ...anterior, [campo]: valor }))
+  }
+
+  async function handleGerarPdf() {
+    if (!tipoSelecionado) return
+    setGerandoPdf(true)
+    try {
+      const nomeArquivo = `${tipoSelecionado.id}-${dadosDocumento.nomeCompleto || 'documento'}.pdf`
+      await gerarPdf(areaRenderizacaoRef.current, nomeArquivo)
+
+      if (artistaId) {
+        const pdfBlob = await gerarPdfComoBlob(areaRenderizacaoRef.current)
+
+        const { error: erroUpload } = await supabase.storage
+          .from('documentos')
+          .upload(`${artistaId}/${nomeArquivo}`, pdfBlob, {
+            contentType: 'application/pdf',
+            upsert: true,
+          })
+        if (erroUpload) throw erroUpload
+
+        const { error: erroInsert } = await supabase
+          .from('documentos_gerados')
+          .insert({
+            artista_id: artistaId,
+            tipo: tipoSelecionado.id,
+            arquivo: `${artistaId}/${nomeArquivo}`,
+            criado_em: new Date().toISOString(),
+          })
+        if (erroInsert) throw erroInsert
+      }
+    } finally {
+      setGerandoPdf(false)
+    }
+  }
+
+  const TemplateSelecionado = tipoSelecionado?.Template
+  //  fim do estado/lógica do gerador de documentos 
 
   const handleFileChange = (e) => {
     const file = e.target.files[0]
@@ -49,8 +172,38 @@ function AssinaturaBranding() {
 
   return (
     <>
-      <h1 className="page-title">ASSINATURA DE CONTRATOS</h1>
+      
 
+      {/* Gerar Documentos (função trazida de PainelFinanceiro, sem alterações) */}
+      <div className="page-title" style={{ marginTop: 8 }}>
+        Gerar Documentos
+      </div>
+
+      {carregandoArtista && <p>Carregando dados do artista...</p>}
+      {erroArtista && <p style={{ color: 'red' }}>{erroArtista}</p>}
+
+      {TIPOS_DE_DOCUMENTO.map((tipo) => (
+        <div
+          key={tipo.id}
+          className={`doc-type-card ${tipoSelecionado?.id === tipo.id ? 'selected' : ''}`}
+          onClick={() => setTipoSelecionado(tipo)}
+        >
+          <div className="doc-type-card-title">{tipo.titulo}</div>
+          <div className="doc-type-card-desc">{tipo.descricao}</div>
+        </div>
+      ))}
+
+      {tipoSelecionado && (
+        <button className="btn btn-primary" onClick={handleGerarPdf} disabled={gerandoPdf}>
+          {gerandoPdf ? 'Gerando PDF...' : 'Gerar PDF'}
+        </button>
+      )}
+
+      {/* Área escondida onde o template do contrato é montado antes de virar PDF */}
+      <div className="pdf-render-area" ref={areaRenderizacaoRef}>
+        {TemplateSelecionado && <TemplateSelecionado dados={dadosDocumento} />}
+      </div>
+      <h1 className="page-title">ASSINATURA DE CONTRATOS</h1>
       <div className="form-section">
         {/* Step 1: Upload */}
         {currentStep === 'upload' && (
